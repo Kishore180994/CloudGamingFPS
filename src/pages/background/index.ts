@@ -54,3 +54,31 @@ chrome.tabs.query({}, (tabs) => {
     chrome.action.setBadgeText({ text: "Off", tabId: tab.id });
   });
 });
+
+let data;
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.type === "DATA_READY") {
+    // Store the data
+    data = request.data;
+    chrome.runtime.openOptionsPage();
+  }
+});
+
+function sendDataToOptionsPage(port) {
+  port.postMessage({ type: "DATA_READY", data: data });
+}
+
+// Listen for connection from the options page
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name === "OPTIONS_PAGE") {
+    // Send the data when the options page connects
+    sendDataToOptionsPage(port);
+
+    // Also send the data whenever it changes
+    port.onMessage.addListener((request) => {
+      if (request.type === "DATA_READY") {
+        sendDataToOptionsPage(port);
+      }
+    });
+  }
+});

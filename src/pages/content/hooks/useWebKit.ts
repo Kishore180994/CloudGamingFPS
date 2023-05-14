@@ -1,20 +1,37 @@
-import { useEffect, useState } from "react";
-import { VideoStats, sliceSetWebKit } from "../../../redux/slice";
-import { useAppDispatch, useAppSelector } from "../../../redux/hooks";
+import { useEffect, useState, useRef } from "react";
+import { useAppSelector } from "../../../redux/hooks";
+
+// Modify this type to include total decoded and dropped frames
+export type VideoStats = {
+  decodedFrames: number;
+  decodedFPSAvg: string;
+  currentDecodedFPS: string;
+  droppedFrames: number;
+  droppedFPSAvg: string;
+  currentDroppedFPS: string;
+  videoWidth: number;
+  videoHeight: number;
+  totalDecodedFrames: number;
+  totalDroppedFrames: number;
+};
 
 const useWebKit = (start: boolean): VideoStats | null => {
   const [stats, setStats] = useState<VideoStats | null>(null);
-  const dispatch = useAppDispatch();
+
   const video = useAppSelector((state) => state.settings.videoElement);
+  const startTimeRef = useRef<number | null>(null);
+  const initialFramesRef = useRef<{ decoded: number; dropped: number } | null>(
+    null
+  );
 
   useEffect(() => {
     if (!video || !start) return;
 
-    const startTime = new Date().getTime();
-    const initialTime = startTime;
-
-    let decodedFrames = 0;
-    let droppedFrames = 0;
+    startTimeRef.current = new Date().getTime();
+    initialFramesRef.current = {
+      decoded: video.webkitDecodedFrameCount,
+      dropped: video.webkitDroppedFrameCount,
+    };
 
     const intervalId = setInterval(() => {
       if (!video.webkitDecodedFrameCount) {
@@ -23,45 +40,39 @@ const useWebKit = (start: boolean): VideoStats | null => {
       }
 
       const currentTime = new Date().getTime();
-      const deltaTime = (currentTime - startTime) / 1000;
-      const totalTime = (currentTime - initialTime) / 1000;
+      const deltaTime = (currentTime - startTimeRef.current!) / 1000;
+      const totalTime = (currentTime - startTimeRef.current!) / 1000;
 
-      const currentDecodedFPS =
-        (video.webkitDecodedFrameCount - decodedFrames) / deltaTime;
-      const decodedFPSavg = video.webkitDecodedFrameCount / totalTime;
-      decodedFrames = video.webkitDecodedFrameCount;
+      const currentDecodedFrames =
+        video.webkitDecodedFrameCount - initialFramesRef.current!.decoded;
+      const currentDroppedFrames =
+        video.webkitDroppedFrameCount - initialFramesRef.current!.dropped;
 
-      const currentDroppedFPS =
-        (video?.webkitDroppedFrameCount - droppedFrames) / deltaTime;
-      const droppedFPSavg = video.webkitDroppedFrameCount / totalTime;
-      droppedFrames = video.webkitDroppedFrameCount;
-      dispatch(
-        sliceSetWebKit({
-          decodedFrames,
-          decodedFPSAvg: decodedFPSavg.toFixed(0),
-          currentDecodedFPS: currentDecodedFPS.toFixed(0),
-          droppedFrames,
-          droppedFPSAvg: droppedFPSavg.toFixed(0),
-          currentDroppedFPS: currentDroppedFPS.toFixed(0),
-          videoWidth: video.videoWidth,
-          videoHeight: video.videoHeight,
-        })
-      );
+      const currentDecodedFPS = currentDecodedFrames / deltaTime;
+      const decodedFPSavg = currentDecodedFrames / totalTime;
 
-      setStats({
-        decodedFrames,
+      const currentDroppedFPS = currentDroppedFrames / deltaTime;
+      const droppedFPSavg = currentDroppedFrames / totalTime;
+
+      const newUpdatedData = {
+        decodedFrames: currentDecodedFrames,
         decodedFPSAvg: decodedFPSavg.toFixed(0),
         currentDecodedFPS: currentDecodedFPS.toFixed(0),
-        droppedFrames,
+        droppedFrames: currentDroppedFrames,
         droppedFPSAvg: droppedFPSavg.toFixed(0),
         currentDroppedFPS: currentDroppedFPS.toFixed(0),
         videoWidth: video.videoWidth,
         videoHeight: video.videoHeight,
-      });
+        totalDecodedFrames: video.webkitDecodedFrameCount,
+        totalDroppedFrames: video.webkitDroppedFrameCount,
+      };
+      setStats(() => newUpdatedData);
     }, 1000);
 
     return () => {
       clearInterval(intervalId);
+      startTimeRef.current = null;
+      initialFramesRef.current = null;
     };
   }, [video, start]);
 

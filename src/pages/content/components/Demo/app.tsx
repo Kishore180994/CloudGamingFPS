@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import useFPS from "../../hooks/useFPS";
 import { StyledContentView } from "./app.styles";
-import { useAppDispatch, useAppSelector } from "../../../../redux/hooks";
+import { useAppDispatch } from "../../../../redux/hooks";
 import { sliceSetVideoElement } from "../../../../redux/slice";
-import useWebKit from "../../hooks/useWebKit";
+import useWebKit, { VideoStats } from "../../hooks/useWebKit";
 import { convertCamelCaseToNormalString } from "../../utils/helper";
 import Draggable from "react-draggable";
-import { Brush, ResponsiveContainer } from "recharts";
+import { ResponsiveContainer } from "recharts";
+import { saveAs } from "file-saver";
 
 import {
   LineChart,
@@ -16,6 +17,32 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
+import useRefreshRate from "../../hooks/useRefreshRate";
+import { useBatteryDischargeRate } from "../../hooks/useBatteryDischargeRate";
+
+function saveAllDataToFile(
+  elapsedTime: string,
+  refreshRate: number,
+  fpsData: Array<{ fps: number; time: string }>,
+  statsData: VideoStats,
+  filename: string
+) {
+  if (fpsData.length <= 0) return;
+  const consolidatedData = {
+    elapsedTime,
+    refreshRate,
+    fpsData,
+    statsData,
+  };
+  chrome.runtime.sendMessage({
+    type: "DATA_READY",
+    data: { elapsedTime, refreshRate, fpsData, statsData },
+  });
+  const blob = new Blob([JSON.stringify(consolidatedData, null, 2)], {
+    type: "text/plain;charset=utf-8",
+  });
+  saveAs(blob, filename);
+}
 
 export default function App() {
   const [start, setStart] = useState<boolean>(false);
@@ -24,14 +51,15 @@ export default function App() {
   );
   const startTime = useRef<Date | null>(null);
   const [elapsedTime, setElapsedTime] = useState<string>("00:00:00");
-  const webKitSummary = useAppSelector((state) => state.settings.webKit);
   const dispatch = useAppDispatch();
 
   const fps = useFPS(start, (fps, time) => {
     setFpsData((prevData) => [...prevData, { fps, time }]);
   });
 
-  useWebKit(start);
+  const webKitSummary = useWebKit(start);
+  const refreshRate = useRefreshRate(start);
+  const batteryStats = useBatteryDischargeRate(start);
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
@@ -72,6 +100,18 @@ export default function App() {
       observer.disconnect();
     };
   }, []);
+
+  useEffect(() => {
+    if (!start) {
+      saveAllDataToFile(
+        elapsedTime,
+        refreshRate,
+        fpsData,
+        webKitSummary,
+        "data.txt"
+      );
+    }
+  }, [start]);
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
@@ -130,6 +170,10 @@ export default function App() {
           <div>Time elasped</div>
           <div>{elapsedTime}</div>
         </div>
+        <div className="time-elasped">
+          <div>Refresh rate</div>
+          <div>{refreshRate}Hz</div>
+        </div>
         <div className="raf">
           <div className="raf-heading">requestVideoFrameCallback</div>
           <div className="stats">
@@ -137,35 +181,64 @@ export default function App() {
             <div className="value">{fps}</div>
           </div>
         </div>
-        <ResponsiveContainer width={300} height={150}>
-          <LineChart data={fpsData} width={300} height={150}>
-            <CartesianGrid stroke="#ccc" />
-            <XAxis dataKey="time" tick={{ fill: "white" }} />
-            <YAxis domain={["dataMin", "dataMax"]} tick={{ fill: "white" }} />
-            <Tooltip
-              contentStyle={{ backgroundColor: "purple", borderColor: "white" }}
-            />
-            <Line
-              type="monotone"
-              dataKey="fps"
-              stroke="#ffffff"
-              activeDot={{ r: 8 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-        <div className="raf">
-          <div className="raf-heading">Video WebKit</div>
-          <div>
-            {Object.entries(webKitSummary).map((entry) => (
-              <div className="stats" key={entry[0]}>
-                <div className="title">
-                  {convertCamelCaseToNormalString(entry[0])}
-                </div>
-                <div className="value">{entry[1]}</div>
+        {!start ? (
+          <ResponsiveContainer width={300} height={150}>
+            <LineChart data={fpsData} width={300} height={150}>
+              <CartesianGrid stroke="#ccc" />
+              <XAxis dataKey="time" tick={{ fill: "white" }} />
+              <YAxis domain={["dataMin", "dataMax"]} tick={{ fill: "white" }} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "purple",
+                  borderColor: "white",
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="fps"
+                stroke="#ffffff"
+                activeDot={{ r: 8 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div>Chart data will be available when the recording is stopped</div>
+        )}
+        {batteryStats && (
+          <div className="raf">
+            <div className="raf-heading">Battery Stats</div>
+            <div className="stats">
+              <div className="title">Initial level</div>
+              <div className="value">{batteryStats.initialBatteryLevel}%</div>
+            </div>
+            <div className="stats">
+              <div className="title">Final level</div>
+              <div className="value">{batteryStats.finalBatteryLevel}%</div>
+            </div>
+            <div className="stats">
+              <div className="title">Discharge rate</div>
+              <div className="value">
+                {batteryStats.batteryDischargeRate}%/s
               </div>
-            ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {webKitSummary && (
+          <div className="raf">
+            <div className="raf-heading">Video WebKit</div>
+            <div>
+              {Object.entries(webKitSummary).map((entry) => (
+                <div className="stats" key={entry[0]}>
+                  <div className="title">
+                    {convertCamelCaseToNormalString(entry[0])}
+                  </div>
+                  <div className="value">{entry[1]}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </StyledContentView>
     </Draggable>
   );
