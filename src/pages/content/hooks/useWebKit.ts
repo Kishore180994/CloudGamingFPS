@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useAppSelector } from "../../../redux/hooks";
 
-// Modify this type to include total decoded and dropped frames
 export type VideoStats = {
   decodedFrames: number;
   decodedFPSAvg: string;
@@ -28,6 +27,7 @@ const useWebKit = (start: boolean): VideoStats | null => {
     if (!video || !start) return;
 
     startTimeRef.current = new Date().getTime();
+    let prevTime = startTimeRef.current;
     initialFramesRef.current = {
       decoded: video.webkitDecodedFrameCount,
       dropped: video.webkitDroppedFrameCount,
@@ -40,7 +40,7 @@ const useWebKit = (start: boolean): VideoStats | null => {
       }
 
       const currentTime = new Date().getTime();
-      const deltaTime = (currentTime - startTimeRef.current!) / 1000;
+      const deltaTime = (currentTime - prevTime) / 1000;
       const totalTime = (currentTime - startTimeRef.current!) / 1000;
 
       const currentDecodedFrames =
@@ -67,6 +67,8 @@ const useWebKit = (start: boolean): VideoStats | null => {
         totalDroppedFrames: video.webkitDroppedFrameCount,
       };
       setStats(() => newUpdatedData);
+
+      prevTime = currentTime; // update prevTime for next interval
     }, 1000);
 
     return () => {
@@ -78,4 +80,5 @@ const useWebKit = (start: boolean): VideoStats | null => {
 
   return stats;
 };
+
 export default useWebKit;
