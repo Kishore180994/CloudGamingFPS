@@ -1,4 +1,6 @@
 /**
+ * Author: Chandra Kishore Danduri
+ *
  * Converts a camelCase string into a normal string with spaces between words.
  *
  * @param {string} camelCaseString - The camelCase string to be converted.

@@ -1,3 +1,6 @@
+/**
+ * Author: Chandra Kishore Danduri
+ */
 import { useEffect, useRef, useState } from "react";
 import useFPS from "../../hooks/useFPS";
 import { StyledContentView } from "./app.styles";

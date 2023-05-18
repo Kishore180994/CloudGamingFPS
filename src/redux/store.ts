@@ -1,3 +1,6 @@
+/**
+ * Author: Chandra Kishore Danduri
+ */
 import { applyMiddleware, compose, configureStore } from "@reduxjs/toolkit";
 
 import { batchedSubscribe } from "redux-batched-subscribe";

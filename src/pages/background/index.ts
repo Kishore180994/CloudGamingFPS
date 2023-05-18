@@ -1,4 +1,6 @@
 /**
+ * Author: Chandra Kishore Danduri
+ *
  * This is a script to manage the background functionality of a Chrome Extension.
  * It imports a utility function called `reloadOnUpdate` to automatically reload the extension
  * when changes are made to certain files. This is particularly useful during development.

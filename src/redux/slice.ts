@@ -1,3 +1,6 @@
+/**
+ * Author: Chandra Kishore Danduri
+ */
 import { createSlice } from "@reduxjs/toolkit";
 
 export interface ExtendedVideoElement extends HTMLVideoElement {

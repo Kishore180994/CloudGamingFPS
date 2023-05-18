@@ -1,3 +1,6 @@
+/**
+ * Author: Chandra Kishore Danduri
+ */
 import styled from "styled-components";
 
 export const StyledContentView = styled.div`

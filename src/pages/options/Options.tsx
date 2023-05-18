@@ -1,3 +1,6 @@
+/**
+ * Author: Chandra Kishore Danduri
+ */
 import React from "react";
 import "@pages/options/Options.css";
 import FileUploader from "./FileUploader";

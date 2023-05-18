@@ -1,3 +1,6 @@
+/**
+ * Author: Chandra Kishore Danduri
+ */
 import React, { useContext, useEffect, useState } from "react";
 import {
   LineChart,
@@ -62,11 +65,13 @@ const FileUploader = () => {
     const messageListener = (request) => {
       if (request.type === "DATA_READY") {
         const data = request.data;
-        setData(data);
-        setFpsData(data.fpsData as Array<FPSData>);
-        setStatsData(data.statsData);
-        setElapsedTime(data.elapsedTime);
-        setRefreshRate(data.refreshRate);
+        if (data) {
+          setData(data);
+          data.fpsData && setFpsData(data.fpsData as Array<FPSData>);
+          data.statsData && setStatsData(data.statsData);
+          data.elapsedTime && setElapsedTime(data.elapsedTime);
+          data.refreshRate && setRefreshRate(data.refreshRate);
+        }
       }
     };
 
@@ -96,7 +101,7 @@ const FileUploader = () => {
           onChange={(e) => handleFileChosen(e.target.files[0])}
         />
       </div>
-      {fpsData.length > 0 && statsData && (
+      {fpsData && fpsData.length > 0 && statsData && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
           <div className={`rounded-lg border p-4 shadow-md ${borderClassName}`}>
             <h2 className={`mb-2 text-xl font-semibold ${textClassName}`}>
