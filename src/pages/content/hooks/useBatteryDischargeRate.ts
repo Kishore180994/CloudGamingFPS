@@ -1,9 +1,18 @@
 import { useEffect, useState } from "react";
 
+/**
+ * Custom interface extending the Navigator interface to include `getBattery` method.
+ * This is necessary because as of my knowledge cutoff in September 2021, `getBattery`
+ * is not yet included in the standard Navigator interface.
+ */
 interface NavigatorBatteryManager extends Navigator {
   getBattery?: () => Promise<BatteryManager>;
 }
 
+/**
+ * Custom interface for the BatteryManager. This includes all the properties and methods
+ * that the BatteryManager is expected to have according to the Battery Status API.
+ */
 interface BatteryManager {
   charging: boolean;
   chargingTime: number;
@@ -20,6 +29,25 @@ interface BatteryManager {
   ): void;
 }
 
+/**
+ * This is a custom React Hook named `useBatteryDischargeRate`. It provides the battery discharge
+ * rate of the device when it is not charging.
+ *
+ * @param {boolean} start - A boolean indicating whether or not to start calculating the battery discharge rate.
+ * @returns {Object} - An object containing battery discharge rate, initial battery level, and final battery level.
+ *
+ * If the `start` parameter is true, it initiates the calculation process. The process starts by recording the
+ * initial battery level. Then, it waits until the device stops charging. Once the device stops charging, it
+ * calculates the discharge rate, which is the difference between the initial and final battery level divided
+ * by the time difference. It updates the `batteryDischargeRate` state with this value. The `initialBatteryLevel`
+ * and `finalBatteryLevel` are also recorded and returned.
+ *
+ * The hook also contains a cleanup function inside the useEffect hook. If `start` is set to false, it stops
+ * the calculation process and resets the states to their initial values.
+ *
+ * Note: This hook uses the Battery Status API which is not supported in all browsers. Make sure to check
+ * for its availability before using this hook in a production environment.
+ */
 export const useBatteryDischargeRate = (start: boolean) => {
   const [batteryDischargeRate, setBatteryDischargeRate] = useState<
     string | null
@@ -77,5 +105,13 @@ export const useBatteryDischargeRate = (start: boolean) => {
     }
   }, [start, initialBatteryLevel]);
 
-  return { batteryDischargeRate, initialBatteryLevel, finalBatteryLevel };
+  return {
+    batteryDischargeRate,
+    initialBatteryLevel: initialBatteryLevel
+      ? parseFloat(initialBatteryLevel.toFixed(2))
+      : 0,
+    finalBatteryLevel: finalBatteryLevel
+      ? parseFloat(finalBatteryLevel.toFixed(2))
+      : 0,
+  };
 };

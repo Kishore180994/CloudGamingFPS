@@ -20,10 +20,18 @@ import {
 import useRefreshRate from "../../hooks/useRefreshRate";
 import { useBatteryDischargeRate } from "../../hooks/useBatteryDischargeRate";
 
+export type FPSData = {
+  fps: number;
+  time: string;
+  latency: number;
+  webKitFPS: number;
+  droppedFrames: number;
+};
+
 function saveAllDataToFile(
   elapsedTime: string,
   refreshRate: number,
-  fpsData: Array<{ fps: number; time: string }>,
+  fpsData: Array<FPSData>,
   statsData: VideoStats,
   filename: string
 ) {
@@ -46,20 +54,32 @@ function saveAllDataToFile(
 
 export default function App() {
   const [start, setStart] = useState<boolean>(false);
-  const [fpsData, setFpsData] = useState<Array<{ fps: number; time: string }>>(
-    []
-  );
+  const [fpsData, setFpsData] = useState<Array<FPSData>>([]);
   const startTime = useRef<Date | null>(null);
   const [elapsedTime, setElapsedTime] = useState<string>("00:00:00");
+  const [time, setTime] = useState<number>(0);
   const dispatch = useAppDispatch();
-
-  const fps = useFPS(start, (fps, time) => {
-    setFpsData((prevData) => [...prevData, { fps, time }]);
-  });
-
   const webKitSummary = useWebKit(start);
   const refreshRate = useRefreshRate(start);
   const batteryStats = useBatteryDischargeRate(start);
+
+  const { fps, latency } = useFPS(start);
+
+  // New useEffect hook for setting fpsData
+  useEffect(() => {
+    if (start) {
+      setFpsData((prevData) => [
+        ...prevData,
+        {
+          fps,
+          time: String(time),
+          latency,
+          webKitFPS: Number(webKitSummary?.currentDecodedFPS) || 0,
+          droppedFrames: Number(webKitSummary?.currentDroppedFPS) || 0,
+        },
+      ]);
+    }
+  }, [fps, latency, start, webKitSummary, time]);
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
@@ -134,6 +154,7 @@ export default function App() {
               const elapsedMs =
                 now.getTime() - (startTime.current?.getTime() || 0);
               const elapsedSec = Math.round(elapsedMs / 1000);
+              setTime(() => elapsedSec);
               const hours = Math.floor(elapsedSec / 3600)
                 .toString()
                 .padStart(2, "0");
@@ -145,6 +166,10 @@ export default function App() {
             }, 1000);
           }
           return !prevStart;
+        });
+      } else if (event.ctrlKey && event.shiftKey && event.key === "O") {
+        chrome.runtime.sendMessage({
+          type: "OPEN_OPTIONS",
         });
       }
     };
@@ -166,6 +191,7 @@ export default function App() {
         <div className="info">
           Press ctrl+shift+G to {start ? "stop" : "start"}
         </div>
+        {!start && <div className="info">Press ctrl+shift+O for more info</div>}
         <div className="time-elasped">
           <div>Time elasped</div>
           <div>{elapsedTime}</div>
@@ -180,8 +206,12 @@ export default function App() {
             <div className="title">FPS</div>
             <div className="value">{fps}</div>
           </div>
+          <div className="stats">
+            <div className="title">Average Display latency/second</div>
+            <div className="value">{latency}ms</div>
+          </div>
         </div>
-        {!start ? (
+        {!start && fpsData.length > 0 ? (
           <ResponsiveContainer width={300} height={150}>
             <LineChart data={fpsData} width={300} height={150}>
               <CartesianGrid stroke="#ccc" />
@@ -204,7 +234,7 @@ export default function App() {
         ) : (
           <div>Chart data will be available when the recording is stopped</div>
         )}
-        {batteryStats && (
+        {batteryStats && batteryStats.initialBatteryLevel && (
           <div className="raf">
             <div className="raf-heading">Battery Stats</div>
             <div className="stats">

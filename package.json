@@ -1,6 +1,6 @@
 {
   "name": "cloud-gaming-fps",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Measures the FPS of the video element",
   "license": "MIT",
   "repository": {
@@ -8,8 +8,9 @@
     "url": "https://github.com/Kishore180994/CloudGamingFPS.git"
   },
   "scripts": {
-    "build": "tsc --noEmit && vite build",
-    "build:watch": "cross-env __DEV__=true vite build --watch",
+    "cssbuild":"npx tailwindcss -i ./src/index.css -o ./dist/output.css --minify",
+    "build": "tsc --noEmit && vite build && yarn cssbuild",
+    "build:watch": "cross-env __DEV__=true vite build --watch && yarn cssbuild",
     "build:hmr": "rollup --config utils/reload/rollup.config.ts",
     "wss": "node utils/reload/initReloadServer.js",
     "dev": "npm run build:hmr && (run-p wss build:watch)",

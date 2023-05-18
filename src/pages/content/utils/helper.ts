@@ -1,3 +1,15 @@
+/**
+ * Converts a camelCase string into a normal string with spaces between words.
+ *
+ * @param {string} camelCaseString - The camelCase string to be converted.
+ * @returns {string} normalString - The converted string.
+ *
+ * This function uses a regular expression to identify words in the camelCase string,
+ * considering uppercase letters as the start of a new word. After splitting the string
+ * into words, it capitalizes the first and last word and joins all the words into a single
+ * string with spaces between them. If the string doesn't match the camelCase pattern,
+ * it is returned as it is.
+ */
 export function convertCamelCaseToNormalString(
   camelCaseString: string
 ): string {
