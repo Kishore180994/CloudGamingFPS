@@ -10,6 +10,7 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  Legend,
 } from "recharts";
 import { convertCamelCaseToNormalString } from "../content/utils/helper";
 import { VideoStats } from "../content/hooks/useWebKit";
@@ -26,12 +27,26 @@ const FpsChart: React.FC<props> = ({ data }) => (
     <LineChart data={data}>
       <Line type="monotone" dataKey="fps" stroke="#8884d8" />
       <Line type="monotone" dataKey="latency" stroke="#82ca9d" />
-      <Line type="monotone" dataKey="webKitFPS" stroke="#CA8282" />
-      <Line type="monotone" dataKey="droppedFrames" stroke="#C6CA82" />
       <CartesianGrid stroke="#ccc" />
       <XAxis dataKey="time" />
       <YAxis />
       <Tooltip />
+      <Legend />
+    </LineChart>
+  </ResponsiveContainer>
+);
+
+const WebKitChart: React.FC<props> = ({ data }) => (
+  <ResponsiveContainer width="100%" height={300}>
+    <LineChart data={data}>
+      <Line type="monotone" dataKey="webKitFPS" stroke="#CA8282" />
+      <Line type="monotone" dataKey="droppedFrames" stroke="#C6CA82" />
+      <Line type="monotone" dataKey="effectiveFPSAvg" stroke="#8382CA" />
+      <CartesianGrid stroke="#ccc" />
+      <XAxis dataKey="time" />
+      <YAxis />
+      <Tooltip />
+      <Legend />
     </LineChart>
   </ResponsiveContainer>
 );
@@ -90,6 +105,7 @@ const FileUploader = () => {
   return (
     <div
       className={`min-h-screen ${containerClassName} p-6 transition-colors duration-500`}
+      id="divToPrint"
     >
       <div className="mb-8">
         <input
@@ -117,9 +133,16 @@ const FileUploader = () => {
           </div>
           <div className={`rounded-lg border p-4 shadow-md ${borderClassName}`}>
             <h2 className={`mb-2 text-xl font-semibold ${textClassName}`}>
-              FPS Chart (requestVideoFrameCallback)
+              FPS Chart
+            </h2>
+            <h2 className={`mb-2 text-lg font-semibold ${textClassName}`}>
+              requestVideoFrameCallback
             </h2>
             <FpsChart data={fpsData} />
+            <h2 className={`mb-2 text-lg font-semibold ${textClassName}`}>
+              webKit
+            </h2>
+            <WebKitChart data={fpsData} />
           </div>
           <div className={`rounded-lg border p-4 shadow-md ${borderClassName}`}>
             <h2 className={`mb-2 text-xl font-semibold ${textClassName}`}>

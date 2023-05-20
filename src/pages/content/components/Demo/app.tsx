@@ -31,6 +31,22 @@ export type FPSData = {
   droppedFrames: number;
 };
 
+/**
+ * This function saves all data to a file in JSON format and sends a message to the Chrome runtime.
+ * @param {string} elapsedTime - A string representing the total elapsed time of the video being
+ * analyzed.
+ * @param {number} refreshRate - The refresh rate is a number that represents how many times per second
+ * the screen is refreshed. It is typically measured in Hertz (Hz) and is important for determining the
+ * smoothness of animations and videos on a display.
+ * @param fpsData - An array of FPSData objects. Each FPSData object contains information about the
+ * frames per second (FPS) of a video at a specific point in time.
+ * @param {VideoStats} statsData - VideoStats is likely an object that contains statistics related to a
+ * video, such as its duration, resolution, bitrate, and other relevant information. However, without
+ * seeing the implementation of VideoStats, it's difficult to say for sure.
+ * @param {string} filename - a string representing the name of the file to be saved.
+ * @returns If the length of `fpsData` is less than or equal to 0, nothing is returned (the function
+ * stops executing).
+ */
 function saveAllDataToFile(
   elapsedTime: string,
   refreshRate: number,
@@ -79,11 +95,17 @@ export default function App() {
           latency,
           webKitFPS: Number(webKitSummary?.currentDecodedFPS) || 0,
           droppedFrames: Number(webKitSummary?.currentDroppedFPS) || 0,
+          effectiveFPSAvg: Number(webKitSummary?.effectiveFPSAvg) || 0,
         },
       ]);
     }
   }, [fps, latency, start, webKitSummary, time]);
 
+  /* This `useEffect` hook is setting up a `MutationObserver` to watch for changes in the DOM. When a new
+`video` element is added to the DOM, the observer will find it and dispatch an action to update the
+`video` element in the Redux store using the `sliceSetVideoElement` action creator. The observer
+also checks for `video` elements inside `iframe` elements and updates the store accordingly. The
+hook returns a cleanup function that disconnects the observer when the component unmounts. */
   useEffect(() => {
     const observer = new MutationObserver(() => {
       const videos = document.querySelectorAll("video");

@@ -3,6 +3,10 @@
  * Author: Chandra Kishore Danduri
  */
 import React, { useState, createContext, useContext } from "react";
+import "./index.css";
+import html2canvas from "html2canvas";
+// import jsPDF from "jspdf";
+import pdfMake from "pdfmake/build/pdfmake";
 
 export const ThemeContext = createContext<{
   theme: string;
@@ -30,7 +34,7 @@ export const ThemeProvider: React.FC<props> = ({ children }) => {
 
 export const Header = () => {
   const { theme, setTheme } = useContext(ThemeContext);
-
+  const [loading, setLoading] = useState<boolean>(false);
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
   };
@@ -72,22 +76,83 @@ export const Header = () => {
       </svg>
     );
 
+  const printDocument = () => {
+    const input = document.getElementById("divToPrint");
+    // Show loading spinner
+    setLoading(true);
+    html2canvas(input)
+      .then((canvas) => {
+        const imgData = canvas.toDataURL("image/png");
+        const pdfWidth = 595.28; // A4 pdf page width in points
+        const imgWidth = pdfWidth; // set image width to match pdf width
+        const imgHeight = (canvas.height * imgWidth) / canvas.width; // adjust image height while maintaining aspect ratio
+
+        const docDefinition = {
+          pageSize: {
+            width: pdfWidth,
+            height: imgHeight, // set page height to match image height
+          },
+          pageMargins: [0, 0, 0, 0], // remove default margins
+          content: [
+            {
+              table: {
+                widths: ["*"],
+                heights: [imgHeight], // set cell height to match image height
+                body: [
+                  [
+                    {
+                      image: imgData,
+                      width: imgWidth,
+                      height: imgHeight,
+                      alignment: "center",
+                      fillColor: "gray", // set cell background color
+                    },
+                  ],
+                ],
+              },
+              layout: "noBorders", // remove default borders
+            },
+          ],
+        };
+
+        pdfMake.createPdf(docDefinition).open();
+        // Hide loading spinner
+        setLoading(false);
+      })
+      .catch((error) => console.error("Oops, something went wrong!", error));
+  };
+
   return (
     <header
-      className={`flex items-center justify-between transition-colors duration-500  ${headerClassName} p-4`}
+      className={`flex items-center justify-between px-10 py-5 shadow-lg transition-all duration-500 ${headerClassName}`}
     >
-      <h1 className="text-2xl font-semibold">Cloud Gaming FPS</h1>
-      <div className="flex items-center space-x-2">
-        <label htmlFor="toggle" className="cursor-pointer">
+      <h1 className="text-3xl font-semibold">Cloud Gaming FPS</h1>
+      <div className="flex items-center space-x-4">
+        <button
+          className="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
+          onClick={printDocument}
+        >
+          {loading ? "Generating PDF..." : "Export to PDF"}
+        </button>
+        <label
+          htmlFor="toggle"
+          className="flex cursor-pointer items-center space-x-2"
+        >
+          <div className="relative inline-block w-10 select-none align-middle transition duration-200 ease-in">
+            <input
+              type="checkbox"
+              id="toggle"
+              checked={theme === "dark"}
+              onChange={toggleTheme}
+              className="toggle-checkbox absolute block h-6 w-6 cursor-pointer appearance-none rounded-full border-4 bg-white"
+            />
+            <label
+              className="toggle-label block h-6 cursor-pointer overflow-hidden rounded-full bg-gray-300"
+              htmlFor="toggle"
+            ></label>
+          </div>
           {logo}
         </label>
-        <input
-          type="checkbox"
-          id="toggle"
-          checked={theme === "dark"}
-          onChange={toggleTheme}
-          className="sr-only"
-        />
       </div>
     </header>
   );

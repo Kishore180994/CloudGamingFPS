@@ -1,6 +1,6 @@
 {
   "name": "cloud-gaming-fps",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Measures the FPS of the video element",
   "license": "MIT",
   "repository": {
@@ -8,7 +8,7 @@
     "url": "https://github.com/Kishore180994/CloudGamingFPS.git"
   },
   "scripts": {
-    "cssbuild":"npx tailwindcss -i ./src/index.css -o ./dist/output.css --minify",
+    "cssbuild": "npx tailwindcss -i ./src/index.css -o ./dist/output.css --minify",
     "build": "tsc --noEmit && vite build && yarn cssbuild",
     "build:watch": "cross-env __DEV__=true vite build --watch && yarn cssbuild",
     "build:hmr": "rollup --config utils/reload/rollup.config.ts",
@@ -18,10 +18,14 @@
   },
   "type": "module",
   "dependencies": {
+    "@react-pdf/renderer": "^3.1.9",
     "@reduxjs/toolkit": "^1.9.5",
     "@types/styled-components": "^5.1.26",
     "file-saver": "^2.0.5",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^2.5.1",
     "lodash.debounce": "^4.0.8",
+    "pdfmake": "^0.2.7",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-draggable": "^4.4.5",

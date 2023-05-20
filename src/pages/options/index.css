@@ -1,0 +1,9 @@
+.toggle-checkbox:checked {
+    right: 0;
+    border-color: #4B5563;
+    background-color: #4B5563;
+}
+
+.toggle-checkbox:checked+.toggle-label {
+    background-color: #1A202C;
+}

@@ -48,12 +48,14 @@ chrome.action.onClicked.addListener((tab) => {
         },
         () => {
           tabStates[tabId] = { scriptInserted: true, visible: true };
+          chrome.storage.local.set({ visible: true }); // Set the visibility state to true
           chrome.action.setBadgeText({ text: "On", tabId: tabId });
         }
       );
     } else {
       chrome.tabs.sendMessage(tabId, { action: "toggleContentScript" });
       tabStates[tabId].visible = !tabStates[tabId].visible;
+      chrome.storage.local.set({ visible: tabStates[tabId].visible }); // Update the visibility state
       chrome.action.setBadgeText({
         text: tabStates[tabId].visible ? "On" : "Off",
         tabId: tabId,

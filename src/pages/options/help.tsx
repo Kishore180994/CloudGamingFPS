@@ -4,6 +4,11 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "./Header";
 
+/* The below code is a React component that displays help information related to video rendering and
+performance. It uses the useContext hook to access the theme context from the Header component and
+dynamically sets the class names for styling based on the theme. The component includes information
+about video rendering, requestVideoFrameCallback, and Video WebKit, along with their respective
+properties and methods. It also includes links to external resources for further reading. */
 const Help = () => {
   const { theme } = useContext(ThemeContext);
   const textClassName = theme === "light" ? "text-black" : "text-white";
