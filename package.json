@@ -1,6 +1,6 @@
 {
   "name": "cloud-gaming-fps",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Measures the FPS of the video element",
   "license": "MIT",
   "repository": {
